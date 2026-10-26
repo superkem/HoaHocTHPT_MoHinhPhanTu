@@ -1,0 +1,1354 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lắp mô hình phân tử</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap">
+<style>
+/* Layout: sticky bench-clock header + station rail; one station (compound group) shown at a time:
+   animated worked example (3D stage + step list) then build challenges that unlock a 3D answer model. */
+:root {
+  --bg: #F6F9FC; --surface: #FFFFFF; --surface2: #EAF4FB; --line: #C9DCEE; --ink: #0B1F3A; --muted: #4E6178;
+  --accent: #1B7F9C; --accent-ink: #FFFFFF; --accent-soft: #D8F1F6; --accent-rgb: 27, 127, 156;
+  --good: #2E8540; --good-soft: #E2F4E5; --bad: #B83A3A; --bad-soft: #FDEAEA; --warn: #9A6410; --warn-soft: #FFF0C7;
+  --stage: #E6F1FA; --grid: rgba(30, 136, 168, .14);
+  --bond: #8996A6; --bondEdge: #56667A; --rim: rgba(11, 31, 58, .38); --tagBg: #FFFFFF; --tagInk: #0B1F3A;
+  --f-body: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-head: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1F3A; --surface: #132239; --surface2: #182C47; --line: #2A4465; --ink: #E8F1FA; --muted: #A2B5CA;
+    --accent: #17C3D6; --accent-ink: #06222B; --accent-soft: #0F3A4E; --accent-rgb: 23, 195, 214;
+    --good: #66CC75; --good-soft: #15361F; --bad: #FF8E8E; --bad-soft: #3B1D25; --warn: #FFC857; --warn-soft: #3A3014;
+    --stage: #0E2744; --grid: rgba(23, 195, 214, .11);
+    --bond: #B3BFCE; --bondEdge: #7D8BA0; --rim: rgba(255, 255, 255, .32); --tagBg: #132239; --tagInk: #E8F1FA;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1F3A; --surface: #132239; --surface2: #182C47; --line: #2A4465; --ink: #E8F1FA; --muted: #A2B5CA;
+  --accent: #17C3D6; --accent-ink: #06222B; --accent-soft: #0F3A4E; --accent-rgb: 23, 195, 214;
+  --good: #66CC75; --good-soft: #15361F; --bad: #FF8E8E; --bad-soft: #3B1D25; --warn: #FFC857; --warn-soft: #3A3014;
+  --stage: #0E2744; --grid: rgba(23, 195, 214, .11);
+  --bond: #B3BFCE; --bondEdge: #7D8BA0; --rim: rgba(255, 255, 255, .32); --tagBg: #132239; --tagInk: #E8F1FA;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  margin: 0; -webkit-text-size-adjust: 100%;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+sub { font-size: .72em; line-height: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+
+.gut { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.in { max-width: 1120px; margin: 0 auto; }
+
+/* ---------- header ---------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; padding-block: 10px 4px; }
+.brand h1 { font-family: var(--f-head); font-size: 19px; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+.brand p { font-size: 12.5px; color: var(--muted); }
+.clock { display: flex; align-items: center; gap: 8px; }
+.clock-digits { font-family: var(--f-head); font-weight: 700; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; min-width: 4.2ch; text-align: right; }
+.clock.low .clock-digits { color: var(--warn); }
+.clock-cap { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 13px; font-weight: 500; font-size: 13.5px; line-height: 1.3; display: inline-flex; align-items: center; gap: 7px; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn svg { width: 15px; height: 15px; flex: none; }
+
+.rail { display: flex; overflow-x: auto; scrollbar-width: thin; margin-top: 2px; }
+.stop { flex: 1 0 auto; min-width: 96px; display: grid; grid-template-columns: auto 1fr; column-gap: 7px; align-items: baseline; text-align: left; background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 10px 7px; color: var(--muted); }
+.stop:hover { background: var(--surface2); }
+.stop[aria-current="true"] { border-bottom-color: var(--accent); color: var(--ink); }
+.stop-n { font-family: var(--f-head); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+.stop-name { font-weight: 600; font-size: 13px; line-height: 1.25; }
+.stop-t { grid-column: 2; font-size: 11.5px; color: var(--muted); }
+.stop.done .stop-n { color: var(--good); }
+.stop.late .stop-t { color: var(--warn); font-weight: 600; }
+.stop svg { width: 13px; height: 13px; vertical-align: -1px; color: var(--good); }
+
+/* ---------- page ---------- */
+.page { padding-block: 22px 56px; }
+.mod { display: none; }
+.mod.on { display: block; }
+.mod-head { display: grid; gap: 6px; margin-bottom: 18px; max-width: 78ch; }
+.eyebrow { font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.mod-head h2 { font-family: var(--f-head); font-size: clamp(26px, 4vw, 34px); line-height: 1.15; font-weight: 700; text-wrap: balance; }
+.mod-goal { color: var(--muted); text-wrap: pretty; }
+.pace { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.pace b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; margin-bottom: 18px; }
+.card-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 14px; }
+.card-h h3 { font-family: var(--f-head); font-size: 20px; font-weight: 700; line-height: 1.25; text-wrap: balance; }
+.tag { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--accent); }
+
+/* ---------- 3D stage + steps ---------- */
+.ex { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.stage { position: relative; aspect-ratio: 4 / 3; min-height: 250px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  background-color: var(--stage);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.stage-hint { position: absolute; left: 10px; top: 8px; font-size: 11.5px; color: var(--muted); pointer-events: none; }
+.stage-tools { position: absolute; right: 8px; top: 6px; display: flex; gap: 6px; }
+.mini { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 5px; padding: 3px 8px; font-size: 11.5px; }
+.mini[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.kitbar { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 13px; align-items: center; }
+.kitbar .cap { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.dot { width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--rim); flex: none; }
+.stick { width: 15px; height: 0; border-top: 4px solid var(--bond); border-radius: 2px; flex: none; }
+.stick.d { height: 5px; border-top: 2px solid var(--bond); border-bottom: 2px solid var(--bond); }
+.stick.t { height: 8px; border-top: 2px solid var(--bond); border-bottom: 2px solid var(--bond); background: linear-gradient(var(--bond), var(--bond)) center / 100% 2px no-repeat; }
+
+.steps { display: grid; gap: 6px; list-style: none; padding: 0; margin: 0; }
+.step { width: 100%; text-align: left; display: grid; grid-template-columns: 26px 1fr; gap: 4px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; }
+.step:hover { border-color: var(--accent); }
+.step-n { grid-row: 1; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.step-t { font-weight: 600; font-size: 14px; line-height: 1.35; align-self: center; }
+.step-d { grid-column: 2; font-size: 13.5px; color: var(--muted); display: none; text-wrap: pretty; }
+.step.past .step-n { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.step.cur { border-color: var(--accent); background: var(--accent-soft); }
+.step.cur .step-n { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.step.cur .step-d { display: block; color: var(--ink); }
+.ctrls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* ---------- legend (khởi động) ---------- */
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.leg { display: grid; grid-template-columns: 34px 1fr; gap: 2px 10px; align-items: center; border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; background: var(--surface); }
+.ball { grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; border: 1px solid var(--rim); }
+.leg b { font-size: 14px; }
+.leg span { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 0 0 4px; counter-reset: f; }
+.flow li { counter-increment: f; border-top: 3px solid var(--accent); background: var(--surface2); padding: 9px 11px 10px; font-size: 13.5px; border-radius: 0 0 6px 6px; }
+.flow li::before { content: counter(f); font-family: var(--f-head); font-weight: 700; color: var(--accent); margin-right: 7px; }
+.flow b { display: block; font-size: 14px; }
+.subhead { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin: 14px 0 8px; }
+
+/* ---------- tasks ---------- */
+.brief { max-width: 78ch; text-wrap: pretty; }
+.kitline { margin: 12px 0 4px; padding: 9px 12px; background: var(--surface2); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 13.5px; }
+.kitline .cap { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.qs { display: grid; gap: 14px; margin: 16px 0 6px; }
+.q-text { font-weight: 600; margin-bottom: 8px; text-wrap: pretty; max-width: 78ch; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 13px; text-align: left; font-size: 14px; max-width: 100%; }
+.opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.opt.ok { background: var(--good-soft); border-color: var(--good); color: var(--ink); font-weight: 600; }
+.opt.bad { background: var(--bad-soft); border-color: var(--bad); text-decoration: line-through; text-decoration-color: var(--bad); }
+.opt:disabled { cursor: default; }
+.fb { font-size: 13.5px; margin-top: 7px; min-height: 1.4em; max-width: 78ch; text-wrap: pretty; }
+.fb.ok { color: var(--good); }
+.fb.bad { color: var(--bad); }
+.reveal-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-top: 14px; }
+.reveal-note { font-size: 13px; color: var(--muted); }
+.rgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 232px), 1fr)); gap: 12px; margin-top: 14px; }
+.rcard { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.rcard .stage { aspect-ratio: 1 / 1; min-height: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.rcap { padding: 9px 11px 11px; display: grid; gap: 2px; }
+.rcap b { font-size: 14px; }
+.rcap .fx { font-size: 13px; color: var(--muted); }
+
+.modnav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.modnav .btn-primary.pulse { box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .28); }
+
+/* ---------- quiz + summary ---------- */
+.qopts { display: flex; flex-wrap: wrap; gap: 8px; }
+.qprog { display: flex; gap: 6px; margin-bottom: 12px; }
+.qprog i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+.qprog i.ok { background: var(--good); }
+.qprog i.bad { background: var(--bad); }
+.qprog i.cur { background: var(--accent); }
+.score { font-family: var(--f-head); font-size: 22px; font-weight: 700; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 560px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--surface2); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; white-space: nowrap; }
+
+.teacher { margin-bottom: 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.teacher summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: 14px; }
+.teacher .body { padding: 2px 14px 14px; display: grid; gap: 12px; font-size: 13.5px; }
+.teacher ul { margin: 0; padding-left: 18px; }
+
+@media (max-width: 860px) {
+  .ex { grid-template-columns: 1fr; }
+  .stop { min-width: 88px; }
+}
+@media (max-width: 480px) {
+  .clock-digits { font-size: 24px; }
+  .card { padding: 14px; }
+  .btn { padding: 7px 11px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+</style>
+<header class="top">
+  <div class="gut"><div class="in">
+    <div class="top-row">
+      <div class="brand">
+        <h1>Lắp mô hình phân tử</h1>
+        <p>Hóa học hữu cơ 11 và Chương 1 Hóa học 12 · hoạt động 45 phút</p>
+      </div>
+      <div class="clock" id="clock" role="timer">
+        <span class="clock-cap">Còn lại</span>
+        <span class="clock-digits" id="clockText">45:00</span>
+        <button class="btn btn-primary" id="clockBtn" type="button">Bắt đầu 45 phút</button>
+        <button class="btn" id="clockReset" type="button">Đặt lại</button>
+      </div>
+    </div>
+    <nav class="rail" id="rail" aria-label="Các phần của hoạt động"></nav>
+  </div></div>
+</header>
+<main class="gut page"><div class="in" id="stage"></div></main>
+<script>
+/* ===== Chem engine: SMILES subset -> 3D ball-and-stick coordinates ===== */
+const Chem = (() => {
+  const D2R = Math.PI / 180;
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const len = a => Math.hypot(a[0], a[1], a[2]);
+  const unit = a => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+
+  const VAL = { C: 4, H: 1, O: 2, N: 3, Cl: 1, Br: 1 };
+  // display radii (angstrom-scaled) so short sticks stay visible between balls
+  const RAD = { H: 0.30, C: 0.46, O: 0.44, N: 0.44, Cl: 0.62, Br: 0.70 };
+
+  function parse(smi) {
+    const atoms = [], nb = [], bonds = [];
+    const stack = [], rings = {};
+    let prev = -1, pend = null;
+    const link = (a, b, o) => {
+      if (o == null) o = (atoms[a].arom && atoms[b].arom) ? 1.5 : 1;
+      bonds.push({ a, b, o });
+      nb[a].push({ j: b, o });
+      nb[b].push({ j: a, o });
+    };
+    for (let i = 0; i < smi.length;) {
+      const ch = smi[i];
+      if (ch === '(') { stack.push(prev); i++; continue; }
+      if (ch === ')') { prev = stack.pop(); i++; continue; }
+      if (ch === '-') { pend = 1; i++; continue; }
+      if (ch === '=') { pend = 2; i++; continue; }
+      if (ch === '#') { pend = 3; i++; continue; }
+      if (ch >= '0' && ch <= '9') {
+        if (rings[ch] === undefined) rings[ch] = prev;
+        else { link(rings[ch], prev, pend); delete rings[ch]; }
+        pend = null; i++; continue;
+      }
+      let el, arom = false;
+      if (smi.startsWith('Cl', i)) { el = 'Cl'; i += 2; }
+      else if (smi.startsWith('Br', i)) { el = 'Br'; i += 2; }
+      else { el = ch; i++; if (el === 'c') { el = 'C'; arom = true; } }
+      const idx = atoms.length;
+      atoms.push({ el, arom });
+      nb.push([]);
+      if (prev >= 0) link(prev, idx, pend);
+      pend = null; prev = idx;
+    }
+    return { atoms, nb, bonds, nHeavy: atoms.length };
+  }
+
+  function addH(m) {
+    for (let i = 0; i < m.nHeavy; i++) {
+      const sum = m.nb[i].reduce((s, x) => s + x.o, 0);
+      const h = Math.max(0, Math.round(VAL[m.atoms[i].el] - sum));
+      for (let k = 0; k < h; k++) {
+        const idx = m.atoms.length;
+        m.atoms.push({ el: 'H', arom: false, hOf: i });
+        m.nb.push([]);
+        m.bonds.push({ a: i, b: idx, o: 1 });
+        m.nb[i].push({ j: idx, o: 1 });
+        m.nb[idx].push({ j: i, o: 1 });
+      }
+    }
+    return m;
+  }
+
+  function geoOf(m, i) {
+    const a = m.atoms[i];
+    if (a.el === 'H' || a.el === 'Cl' || a.el === 'Br') return 'term';
+    const os = m.nb[i].map(x => x.o);
+    if (a.el === 'O') return os.includes(2) ? 'term' : 'bent';
+    if (a.el === 'C') {
+      if (os.includes(3) || os.filter(o => o === 2).length >= 2) return 'sp';
+      if (os.includes(2) || a.arom) return 'sp2';
+      return 'sp3';
+    }
+    return 'sp3';
+  }
+
+  function bondLen(m, a, b, o) {
+    const ea = m.atoms[a].el, eb = m.atoms[b].el;
+    const pair = [ea, eb].sort().join('-');
+    switch (pair) {
+      case 'C-H': return 1.09;
+      case 'H-O': return 0.96;
+      case 'C-Cl': return 1.77;
+      case 'Br-C': return 1.94;
+      case 'C-C': {
+        if (o === 1.5) return 1.40;
+        if (o === 2) return 1.34;
+        if (o === 3) return 1.20;
+        const ga = geoOf(m, a), gb = geoOf(m, b);
+        if (ga === 'sp' || gb === 'sp') return 1.46;
+        if (ga === 'sp2' || gb === 'sp2') return 1.51;
+        return 1.54;
+      }
+      case 'C-O': {
+        if (o === 2) return 1.22;
+        const c = ea === 'C' ? a : b;
+        return geoOf(m, c) === 'sp2' ? 1.35 : 1.43;
+      }
+      default: return 1.5;
+    }
+  }
+
+  function aromComps(m) {
+    const seen = new Set(), comps = [];
+    for (let i = 0; i < m.nHeavy; i++) {
+      if (!m.atoms[i].arom || seen.has(i)) continue;
+      const ring = [i];
+      seen.add(i);
+      let cur = i, prevA = -1;
+      for (;;) {
+        const nx = m.nb[cur].find(x => x.o === 1.5 && x.j !== prevA && !seen.has(x.j));
+        if (!nx) break;
+        ring.push(nx.j); seen.add(nx.j); prevA = cur; cur = nx.j;
+      }
+      comps.push(ring);
+    }
+    return comps;
+  }
+
+  /* Place atoms by ideal local geometry. opts.rot = {atomIndex: degrees} turns that atom's
+     substituents about the bond to its parent (used to flip cis/trans or avoid clashes). */
+  function build(smi, opts = {}) {
+    const m = addH(parse(smi));
+    const n = m.atoms.length;
+    const pos = new Array(n).fill(null);
+    const parent = new Array(n).fill(-1);
+    const rot = opts.rot || {};
+    const comps = aromComps(m);
+    const compOf = {};
+    comps.forEach((c, ci) => c.forEach(a => { compOf[a] = ci; }));
+
+    const pickG = (P, A) => {
+      if (parent[P] >= 0) return parent[P];
+      for (const x of m.nb[P]) if (x.j !== A && pos[x.j] !== null) return x.j;
+      return -1;
+    };
+    const inPlane = (u, Gi, P) => {
+      const r = Gi >= 0 ? sub(pos[Gi], pos[P]) : [0, 0, 1];
+      let perp = sub(r, mul(u, dot(r, u)));
+      if (len(perp) < 1e-6) perp = Math.abs(u[0]) < 0.9 ? cross(u, [1, 0, 0]) : cross(u, [0, 1, 0]);
+      return unit(perp);
+    };
+
+    function placeKids(A, P) {
+      const kids = m.nb[A].filter(x => x.j !== P && pos[x.j] === null);
+      if (!kids.length) return;
+      const g = geoOf(m, A);
+      const dirs = [];
+      if (P < 0) {
+        if (g === 'sp3' || g === 'bent') {
+          const th = 109.47 * D2R;
+          dirs.push([1, 0, 0]);
+          for (let k = 0; k < 3; k++) {
+            const ph = k * 120 * D2R;
+            dirs.push([Math.cos(th), Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph)]);
+          }
+        } else if (g === 'sp2') {
+          const c = Math.cos(120 * D2R), s = Math.sin(120 * D2R);
+          dirs.push([1, 0, 0], [c, s, 0], [c, -s, 0]);
+        } else if (g === 'sp') dirs.push([1, 0, 0], [-1, 0, 0]);
+        else dirs.push([1, 0, 0]);
+        const b0 = (rot[A] || 0) * D2R;   // spin the whole root about the x axis
+        if (b0) dirs.forEach((d, i) => { dirs[i] = [d[0], d[1] * Math.cos(b0) - d[2] * Math.sin(b0), d[1] * Math.sin(b0) + d[2] * Math.cos(b0)]; });
+      } else {
+        const u = unit(sub(pos[A], pos[P]));
+        const syn = inPlane(u, pickG(P, A), P);
+        const anti = mul(syn, -1);
+        const w = cross(u, anti);
+        const base = (rot[A] || 0) * D2R;
+        const polar = g === 'sp2' ? 60 * D2R : 70.53 * D2R;
+        const step = g === 'sp2' ? Math.PI : 120 * D2R;
+        for (let k = 0; k < kids.length; k++) {
+          if (g === 'sp') { dirs.push(u); continue; }
+          const ph = base + k * step;
+          const radial = add(mul(anti, Math.cos(ph)), mul(w, Math.sin(ph)));
+          dirs.push(add(mul(u, Math.cos(polar)), mul(radial, Math.sin(polar))));
+        }
+      }
+      kids.forEach((x, k) => {
+        pos[x.j] = add(pos[A], mul(dirs[k], bondLen(m, A, x.j, x.o)));
+        parent[x.j] = A;
+      });
+      kids.forEach(x => {
+        if (x.j >= m.nHeavy) return;
+        if (compOf[x.j] !== undefined) placeRing(x.j, A); else placeKids(x.j, A);
+      });
+    }
+
+    function placeRing(entry, P) {
+      const ci = compOf[entry];
+      const comp = comps[ci];
+      const k0 = comp.indexOf(entry);
+      const ord = comp.slice(k0).concat(comp.slice(0, k0));
+      let u = [1, 0, 0], w = [0, 1, 0];
+      if (P >= 0) { u = unit(sub(pos[entry], pos[P])); w = inPlane(u, pickG(P, entry), P); }
+      const tw = ((opts.twist && opts.twist[entry]) || 0) * D2R;   // turn the ring about the bond to its parent
+      if (tw) w = add(mul(w, Math.cos(tw)), mul(cross(u, w), Math.sin(tw)));
+      const R = 1.40;
+      const cen = add(pos[entry], mul(u, R));
+      ord.forEach((a, s) => {
+        const th = s * Math.PI / 3;
+        pos[a] = add(cen, add(mul(u, -R * Math.cos(th)), mul(w, R * Math.sin(th))));
+        if (s > 0) parent[a] = ord[s - 1];
+      });
+      parent[entry] = P;
+      const subs = [];
+      ord.forEach(a => {
+        const rad = unit(sub(pos[a], cen));
+        m.nb[a].forEach(x => {
+          if (compOf[x.j] === ci || pos[x.j] !== null) return;
+          pos[x.j] = add(pos[a], mul(rad, bondLen(m, a, x.j, x.o)));
+          parent[x.j] = a;
+          subs.push(x.j);
+        });
+      });
+      subs.forEach(j => {
+        if (j >= m.nHeavy) return;
+        if (compOf[j] !== undefined) placeRing(j, parent[j]); else placeKids(j, parent[j]);
+      });
+    }
+
+    pos[0] = [0, 0, 0];
+    if (compOf[0] !== undefined) placeRing(0, -1); else placeKids(0, -1);
+
+    const cen = mul(pos.reduce((s, p) => add(s, p), [0, 0, 0]), 1 / n);
+    m.pos = pos.map(p => sub(p, cen));
+    m.R = Math.max(...m.pos.map(p => len(p))) + 0.7;
+    m.parent = parent;
+    return m;
+  }
+
+  function counts(m) {
+    const c = {};
+    m.atoms.forEach(a => { c[a.el] = (c[a.el] || 0) + 1; });
+    return c;
+  }
+
+  function formula(m) {
+    const c = counts(m);
+    const rest = Object.keys(c).filter(k => k !== 'C' && k !== 'H').sort();
+    const order = (c.C ? ['C'] : []).concat(c.H ? ['H'] : [], rest);
+    return order.map(k => k + (c[k] > 1 ? '<sub>' + c[k] + '</sub>' : '')).join('');
+  }
+
+  // sticks needed with a Kekule ring: aromatic ring bonds split evenly into single and double
+  function inventory(m) {
+    const c = counts(m);
+    let single = 0, dbl = 0, trip = 0, ar = 0;
+    m.bonds.forEach(b => {
+      if (b.o === 1) single++;
+      else if (b.o === 2) dbl++;
+      else if (b.o === 3) trip++;
+      else ar++;
+    });
+    single += ar / 2; dbl += ar / 2;
+    return { atoms: c, single, dbl, trip };
+  }
+
+  return { build, formula, inventory, counts, RAD, geoOf };
+})();
+if (typeof module !== 'undefined') module.exports = Chem;
+/* ===== Nội dung hoạt động: 45 phút, Hóa học hữu cơ 11 + Chương 1 Hóa học 12 (Ester – Lipid) ===== */
+// Chỉ số trong steps là chỉ số nguyên tử nặng theo thứ tự viết trong SMILES; h = carbon/oxygen cần điền H.
+const M = (smi, name, cond, opts) => ({ smi, name, cond, opts: opts || {} });
+
+const MODULES = [
+  {
+    id: 'm0', short: 'Khởi động', group: 'Chuẩn bị', title: 'Làm quen bộ mô hình', min: 4,
+    goal: 'Nắm quy ước màu, số lỗ của từng quả cầu và quy trình lắp 4 bước dùng cho mọi nhóm sau.',
+    example: {
+      title: 'Ví dụ mẫu: methane CH4', smi: 'C',
+      steps: [
+        { t: 'Lấy 1 quả cầu đen (C)', d: 'Carbon có 4 lỗ. Mỗi lỗ sẽ nhận một que liên kết.', heavy: [0] },
+        { t: 'Gắn 4 quả cầu trắng (H)', d: 'Mỗi H chỉ có 1 lỗ nên chỉ nối được 1 que. Dùng 4 que đơn (liên kết σ) nối C với 4 H.', h: [0] },
+        { t: 'Kiểm tra hình dạng', d: 'Bốn H tự tách xa nhau nhất có thể: hình tứ diện đều, góc H–C–H ≈ 109,5°. Không thể xếp phẳng.', hl: [0], tag: { a: [0], t: '109,5°' } },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Kiểm tra nhanh quy ước', brief: 'Không cần lắp. Trả lời nhanh bằng cách nhìn vào bảng linh kiện ở trên.',
+        qs: [
+          { q: 'Một nguyên tử O (quả cầu đỏ) tạo được tối đa bao nhiêu liên kết đơn?', opts: ['1', '2', '3', '4'], a: 1, why: 'O có 2 lỗ: hoặc 2 liên kết đơn (–O–), hoặc 1 liên kết đôi (=O).' },
+          { q: 'Trong hợp chất hữu cơ, mỗi nguyên tử C luôn có tổng bao nhiêu liên kết (tính cả liên kết đôi, ba)?', opts: ['2', '3', '4', '6'], a: 2, why: 'C có 4 lỗ: C=C dùng 2 lỗ của mỗi C, C≡C dùng 3 lỗ của mỗi C.' },
+          { q: 'Liên kết đôi C=C gồm những liên kết nào?', opts: ['2 liên kết σ', '1 liên kết σ + 1 liên kết π', '2 liên kết π', '1 liên kết σ + 2 liên kết π'], a: 1, why: 'Que thứ nhất là σ, lò xo thứ hai là π (yếu hơn, không cho quay tự do).' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm1', short: 'Alkane', group: 'Hydrocarbon no', title: 'Alkane', min: 5,
+    goal: 'Chỉ có liên kết đơn σ, carbon tứ diện; cùng một công thức có thể có nhiều cách nối mạch carbon.',
+    example: {
+      title: 'Ví dụ mẫu: butane C4H10', smi: 'CCCC',
+      steps: [
+        { t: 'Lắp khung carbon', d: 'Nối 4 quả cầu đen bằng 3 que đơn (3 liên kết σ C–C). Mạch gấp khúc vì góc C–C–C ≈ 109,5°.', heavy: [0, 1, 2, 3] },
+        { t: 'Điền H vào mọi lỗ trống', d: 'C đầu mạch còn 3 lỗ, C giữa mạch còn 2 lỗ: 3 + 2 + 2 + 3 = 10 H.', h: [0, 1, 2, 3] },
+        { t: 'Kiểm tra hóa trị và công thức', d: 'Mỗi C đủ 4 liên kết. C4H10 thuộc dãy C<sub>n</sub>H<sub>2n+2</sub>; có 3 + 10 = 13 liên kết σ.', hl: [0, 1, 2, 3], tag: { a: [0, 1, 2, 3], t: 'C₄H₁₀' } },
+        { t: 'Xoay thử quanh liên kết C–C', d: 'Liên kết đơn σ quay tự do nên mạch uốn cong vẫn là cùng một chất. Kéo chuột (hoặc ngón tay) để xoay mô hình.' },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Lắp mọi đồng phân của C4H10', brief: 'Chỉ dùng 4 C và 10 H. Lắp hai mô hình khác nhau về cách nối các carbon (không tính việc xoay quanh liên kết đơn).',
+        qs: [
+          { q: 'Có bao nhiêu đồng phân cấu tạo ứng với C4H10?', opts: ['1', '2', '3', '4'], a: 1, why: 'Chỉ có hai cách nối 4 carbon: mạch thẳng (butane) và mạch nhánh (2-methylpropane).' },
+          { q: 'Trong 2-methylpropane, carbon ở giữa liên kết trực tiếp với bao nhiêu carbon khác?', opts: ['1', '2', '3', '4'], a: 2, why: 'Carbon trung tâm nối với 3 nhóm CH3 và 1 H, nên là carbon bậc III.' },
+        ],
+        mols: [M('CCCC', 'butane', 'CH3–CH2–CH2–CH3'), M('CC(C)C', '2-methylpropane', 'CH3–CH(CH3)–CH3')],
+      },
+      {
+        title: 'Lắp ba đồng phân của C5H12', brief: 'Dùng 5 C và 12 H. Lắp ba mô hình: mạch thẳng, mạch có 1 nhánh CH3, và mạch có 2 nhánh CH3 trên cùng một carbon.',
+        qs: [
+          { q: 'Đồng phân nào có carbon bậc IV (carbon liên kết trực tiếp với 4 carbon khác)?', opts: ['pentane', '2-methylbutane', '2,2-dimethylpropane'], a: 2, why: 'Carbon trung tâm của 2,2-dimethylpropane nối với 4 nhóm CH3.' },
+          { q: 'Số liên kết σ trong một phân tử C5H12 (mọi đồng phân đều như nhau) là?', opts: ['14', '15', '16', '17'], a: 2, why: '4 liên kết C–C + 12 liên kết C–H = 16, đúng với công thức 3n + 1 khi n = 5.' },
+        ],
+        mols: [M('CCCCC', 'pentane', 'CH3–CH2–CH2–CH2–CH3'), M('CC(C)CC', '2-methylbutane', 'CH3–CH(CH3)–CH2–CH3'), M('CC(C)(C)C', '2,2-dimethylpropane', 'CH3–C(CH3)2–CH3')],
+      },
+    ],
+  },
+  {
+    id: 'm2', short: 'Alkene, alkyne', group: 'Hydrocarbon không no', title: 'Alkene và alkyne', min: 7,
+    goal: 'Liên kết đôi giữ các nguyên tử trong một mặt phẳng và không quay tự do; liên kết ba tạo đoạn thẳng 180°.',
+    example: {
+      title: 'Ví dụ mẫu: ethylene C2H4', smi: 'C=C',
+      steps: [
+        { t: 'Nối 2 C bằng liên kết đôi', d: 'Dùng 2 lò xo (que cong) giữa hai quả cầu đen: 1 liên kết σ + 1 liên kết π. Mỗi C đã dùng 2 trong 4 lỗ.', heavy: [0, 1], hl: [0, 1], tag: { a: [0, 1], t: 'C=C' } },
+        { t: 'Điền H vào lỗ còn lại', d: 'Mỗi C còn 2 lỗ nên nhận 2 H. C2H4 thuộc dãy C<sub>n</sub>H<sub>2n</sub>.', h: [0, 1] },
+        { t: 'Nhìn thẳng vào mặt phẳng', d: 'Sáu nguyên tử nằm trên một mặt phẳng, các góc ≈ 120°.', cam: [0, 0] },
+        { t: 'Nhìn ngang: chỉ còn một đường', d: 'Cả 6 nguyên tử xếp thành một đường, tức là phẳng. Liên kết π không cho quay quanh C=C, nên mới có đồng phân cis/trans.', cam: [0, 90] },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Lắp các alkene C4H8', brief: 'Dùng 4 C, 8 H và 1 liên kết đôi. Lắp lần lượt but-1-ene, but-2-ene, 2-methylpropene. Với but-2-ene, thử đổi chỗ hai nhóm CH3 ở hai đầu liên kết đôi.',
+        qs: [
+          { q: 'Có bao nhiêu alkene C4H8 (tính cả đồng phân hình học cis/trans)?', opts: ['2', '3', '4', '5'], a: 2, why: 'but-1-ene, cis-but-2-ene, trans-but-2-ene và 2-methylpropene.' },
+          { q: 'Điều kiện để alkene có đồng phân hình học là gì?', opts: ['Mỗi carbon của liên kết đôi gắn với hai nhóm thế khác nhau', 'Mạch carbon phải có từ 4 carbon trở lên', 'Phân tử phải có carbon bậc III', 'Liên kết đôi phải ở đầu mạch'], a: 0, why: 'Liên kết đôi không quay tự do. Nếu một C của C=C mang 2 nhóm giống nhau (như but-1-ene, 2-methylpropene) thì đổi chỗ không tạo chất mới.' },
+        ],
+        mols: [
+          M('C=CCC', 'but-1-ene', 'CH2=CH–CH2–CH3'),
+          M('CC=CC', 'trans-but-2-ene', 'CH3–CH=CH–CH3 (hai CH3 khác phía)'),
+          M('CC=CC', 'cis-but-2-ene', 'CH3–CH=CH–CH3 (hai CH3 cùng phía)', { rot: { 2: 180 } }),
+          M('C=C(C)C', '2-methylpropene', 'CH2=C(CH3)–CH3'),
+        ],
+      },
+      {
+        title: 'Lắp hai alkyne C4H6', brief: 'Dùng 4 C, 6 H và 1 liên kết ba (3 lò xo). Lắp but-1-yne và but-2-yne rồi quan sát liên kết ba nằm ở đâu.',
+        qs: [
+          { q: 'Trong but-2-yne có bao nhiêu nguyên tử carbon nằm trên cùng một đường thẳng?', opts: ['2', '3', '4'], a: 2, why: 'Mỗi C≡C được hai C bên cạnh nối với góc 180°, nên cả 4 C thẳng hàng.' },
+          { q: 'Đồng phân nào có H gắn trực tiếp vào carbon của liên kết ba và tạo kết tủa với AgNO3/NH3?', opts: ['but-1-yne', 'but-2-yne'], a: 0, why: 'Chỉ alkyne có liên kết ba đầu mạch (≡C–H) mới thế được H bằng ion Ag⁺.' },
+        ],
+        mols: [M('C#CCC', 'but-1-yne', 'CH≡C–CH2–CH3'), M('CC#CC', 'but-2-yne', 'CH3–C≡C–CH3')],
+      },
+    ],
+  },
+  {
+    id: 'm3', short: 'Arene', group: 'Hydrocarbon thơm', title: 'Arene', min: 5,
+    goal: 'Vòng benzene phẳng với 6 liên kết C–C như nhau; nhóm thế trên vòng cho đồng phân vị trí.',
+    example: {
+      title: 'Ví dụ mẫu: benzene C6H6', smi: 'c1ccccc1',
+      steps: [
+        { t: 'Xếp 6 C thành lục giác', d: 'Nối 6 quả cầu đen thành vòng phẳng. Theo mô hình Kekulé dùng 3 que đơn xen kẽ 3 que đôi (lò xo).', heavy: [0, 1, 2, 3, 4, 5] },
+        { t: 'Điền H', d: 'Mỗi C còn 1 lỗ nên nhận 1 H: 6 H. Công thức C6H6, dãy arene C<sub>n</sub>H<sub>2n−6</sub>.', h: [0, 1, 2, 3, 4, 5] },
+        { t: 'Nhìn từ trên xuống', d: 'Lục giác đều, các góc 120°; 6 liên kết C–H tỏa ra ngoài như nan hoa.', cam: [0, 0] },
+        { t: 'Nhìn ngang', d: '12 nguyên tử cùng nằm trong một mặt phẳng. Thực tế 6 liên kết C–C đều bằng nhau (≈ 0,140 nm), không có đơn hay đôi riêng rẽ.', cam: [0, 90] },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Thay H bằng CH3', brief: 'Từ benzene, thay 1 rồi 2 nguyên tử H bằng nhóm CH3 (toluene rồi dimethylbenzene). Với 2 nhóm CH3, thử đặt ở các vị trí khác nhau trên vòng.',
+        qs: [
+          { q: 'Có bao nhiêu dimethylbenzene C8H10 (2 nhóm CH3 trên vòng)?', opts: ['2', '3', '4', '6'], a: 1, why: 'Vị trí 1,2 (ortho), 1,3 (meta) và 1,4 (para).' },
+          { q: 'Trong toluene có bao nhiêu nguyên tử H gắn trực tiếp vào vòng benzene?', opts: ['3', '4', '5', '6'], a: 2, why: 'Vòng có 6 C, một C đã gắn CH3 nên còn 5 C mang H.' },
+        ],
+        mols: [
+          M('Cc1ccccc1C', '1,2-dimethylbenzene', 'o-C6H4(CH3)2', { rot: { 7: 60 } }),
+          M('Cc1cccc(C)c1', '1,3-dimethylbenzene', 'm-C6H4(CH3)2'),
+          M('Cc1ccc(C)cc1', '1,4-dimethylbenzene', 'p-C6H4(CH3)2'),
+        ],
+      },
+      {
+        title: 'Gắn nhóm vinyl vào vòng', brief: 'Thay 1 H của benzene bằng nhóm –CH=CH2 để được styrene C8H8. Lắp thêm một liên kết đôi nằm ngoài vòng.',
+        qs: [
+          { q: 'Chất nào làm mất màu nước bromine ở điều kiện thường?', opts: ['benzene', 'toluene', 'styrene'], a: 2, why: 'Styrene có liên kết đôi C=C ngoài vòng, cộng bromine dễ dàng. Vòng benzene bền nên benzene và toluene không làm mất màu nước bromine.' },
+          { q: 'Viết theo Kekulé, tổng số liên kết π trong styrene là?', opts: ['3', '4', '5', '8'], a: 1, why: '3 liên kết π của vòng + 1 liên kết π của nhóm vinyl = 4.' },
+        ],
+        mols: [M('C=Cc1ccccc1', 'styrene', 'C6H5–CH=CH2', { twist: { 2: 25 } })],
+      },
+    ],
+  },
+  {
+    id: 'm4', short: 'Dẫn xuất halogen', group: 'Dẫn xuất halogen', title: 'Dẫn xuất halogen', min: 3,
+    goal: 'Halogen chỉ có 1 lỗ nên thay thế một H; bậc của dẫn xuất halogen là bậc của carbon gắn halogen.',
+    example: {
+      title: 'Ví dụ mẫu: chloroethane C2H5Cl', smi: 'CCCl',
+      steps: [
+        { t: 'Lắp khung C2', d: 'Hai quả cầu đen nối bằng một que đơn.', heavy: [0, 1] },
+        { t: 'Gắn quả cầu xanh lá (Cl)', d: 'Cl chỉ có 1 lỗ nên chỉ nối được vào một carbon bằng một que đơn. Que C–Cl dài hơn que C–H.', heavy: [2], hl: [1, 2], tag: { a: [1, 2], t: 'C–Cl' } },
+        { t: 'Điền H vào lỗ trống', d: 'CH3 nhận 3 H, CH2 nhận 2 H. C2H5Cl chính là ethane đã bị thay 1 H bằng 1 Cl.', h: [0, 1] },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Lắp các đồng phân C3H7Cl', brief: 'Dùng 3 C, 1 Cl và 7 H. Chỉ cần đổi vị trí của Cl trên mạch 3 carbon.',
+        qs: [
+          { q: 'Có bao nhiêu dẫn xuất chlorine C3H7Cl?', opts: ['1', '2', '3', '4'], a: 1, why: 'Cl gắn vào carbon đầu mạch (1-chloropropane) hoặc carbon giữa mạch (2-chloropropane).' },
+          { q: '2-chloropropane là dẫn xuất halogen bậc mấy?', opts: ['bậc I', 'bậc II', 'bậc III'], a: 1, why: 'Carbon gắn Cl liên kết trực tiếp với 2 carbon khác nên là bậc II.' },
+        ],
+        mols: [M('CCCCl', '1-chloropropane', 'CH3–CH2–CH2Cl'), M('CC(Cl)C', '2-chloropropane', 'CH3–CHCl–CH3')],
+      },
+    ],
+  },
+  {
+    id: 'm5', short: 'Alcohol, phenol', group: 'Alcohol – phenol', title: 'Alcohol và phenol', min: 6,
+    goal: 'Nhóm –OH gắn vào carbon no là alcohol, gắn trực tiếp vào vòng benzene là phenol; O luôn tạo góc gấp khúc.',
+    example: {
+      title: 'Ví dụ mẫu: ethanol C2H5OH', smi: 'CCO',
+      steps: [
+        { t: 'Lắp khung C2', d: 'Hai quả cầu đen nối bằng một que đơn.', heavy: [0, 1] },
+        { t: 'Gắn quả cầu đỏ (O)', d: 'O có 2 lỗ: một lỗ nối với C, lỗ còn lại dành cho H.', heavy: [2], hl: [2] },
+        { t: 'Điền H', d: 'CH3 nhận 3 H, CH2 nhận 2 H, O nhận 1 H. Nhóm –OH gắn vào carbon no là alcohol: ethanol C2H5OH.', h: [0, 1, 2], hl: [2], tag: { a: [2], t: '–OH' } },
+        { t: 'Kiểm tra góc ở O', d: 'O có 2 liên kết nên góc C–O–H gấp khúc (≈ 109°), không thẳng hàng. Xoay mô hình để thấy rõ.', hl: [1, 2] },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Lắp các alcohol C3H8O', brief: 'Dùng 3 C, 1 O và 8 H, với nhóm –OH gắn vào carbon no. Đổi vị trí nhóm –OH trên mạch 3 carbon.',
+        qs: [
+          { q: 'Có bao nhiêu alcohol ứng với C3H8O?', opts: ['1', '2', '3'], a: 1, why: 'propan-1-ol (–OH ở đầu mạch) và propan-2-ol (–OH ở giữa mạch).' },
+          { q: 'Propan-2-ol là alcohol bậc mấy?', opts: ['bậc I', 'bậc II', 'bậc III'], a: 1, why: 'Bậc của alcohol là bậc của carbon gắn –OH; carbon này nối với 2 carbon khác.' },
+        ],
+        mols: [M('CCCO', 'propan-1-ol', 'CH3–CH2–CH2–OH'), M('CC(O)C', 'propan-2-ol', 'CH3–CH(OH)–CH3')],
+      },
+      {
+        title: 'Phenol hay alcohol?', brief: 'Lắp hai chất đều có vòng benzene và nhóm –OH: C6H5OH và C6H5CH2OH. Quan sát nhóm –OH gắn vào đâu.',
+        qs: [
+          { q: 'Chất nào là phenol?', opts: ['C6H5OH (–OH gắn trực tiếp vào vòng)', 'C6H5CH2OH (–OH gắn vào CH2 ngoài vòng)'], a: 0, why: 'Phenol có –OH gắn trực tiếp vào carbon của vòng benzene. Chất còn lại là alcohol (phenylmethanol).' },
+          { q: 'Chất nào phản ứng được với dung dịch NaOH?', opts: ['phenol', 'phenylmethanol', 'cả hai'], a: 0, why: 'Vòng benzene làm liên kết O–H của phenol phân cực hơn nên phenol có tính acid yếu và phản ứng với NaOH; alcohol thì không.' },
+        ],
+        mols: [M('Oc1ccccc1', 'phenol', 'C6H5–OH'), M('OCc1ccccc1', 'phenylmethanol', 'C6H5–CH2–OH', { twist: { 2: 90 } })],
+      },
+    ],
+  },
+  {
+    id: 'm6', short: 'Aldehyde, ketone', group: 'Hợp chất carbonyl', title: 'Aldehyde và ketone', min: 5,
+    goal: 'Cả hai có nhóm C=O phẳng 120°; aldehyde có H gắn trực tiếp vào C=O, ketone có C=O nằm giữa hai gốc carbon.',
+    example: {
+      title: 'Ví dụ mẫu: ethanal CH3CHO', smi: 'CC=O',
+      steps: [
+        { t: 'Lắp khung C2', d: 'Hai quả cầu đen nối bằng một que đơn.', heavy: [0, 1] },
+        { t: 'Nối O bằng liên kết đôi', d: 'O dùng cả 2 lỗ cho một liên kết đôi C=O. Carbon này đã dùng 3 lỗ (1 cho C, 2 cho O).', heavy: [2], hl: [1, 2], tag: { a: [1, 2], t: 'C=O' } },
+        { t: 'Điền H', d: 'CH3 nhận 3 H; carbon của C=O còn 1 lỗ nên nhận 1 H. H gắn trực tiếp vào C=O tạo nhóm –CHO: ethanal CH3CHO.', h: [0, 1], tag: { a: [1, 2], t: '–CHO' } },
+        { t: 'Kiểm tra hình dạng', d: 'Carbon của C=O, O và hai nguyên tử nối với carbon đó (C, H) nằm trong một mặt phẳng, các góc ≈ 120°.', hl: [1, 2] },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Aldehyde hay ketone? (C3H6O)', brief: 'Dùng 3 C, 1 O, 6 H và 1 liên kết đôi C=O. Lắp hai mô hình: C=O ở đầu mạch và C=O ở giữa mạch.',
+        qs: [
+          { q: 'Chất nào là aldehyde?', opts: ['propanal (C=O ở đầu mạch, có H gắn vào C=O)', 'propanone (C=O ở giữa mạch)'], a: 0, why: 'Aldehyde có nhóm –CHO: carbon của C=O còn gắn 1 H. Ketone có C=O nối với hai gốc hydrocarbon.' },
+          { q: 'Chất nào tạo kết tủa Ag với thuốc thử Tollens (AgNO3/NH3)?', opts: ['propanal', 'propanone', 'cả hai'], a: 0, why: 'Chỉ aldehyde (có H gắn vào C=O) bị oxi hóa; ketone không phản ứng.' },
+        ],
+        mols: [M('CCC=O', 'propanal', 'CH3–CH2–CHO'), M('CC(=O)C', 'propanone (acetone)', 'CH3–CO–CH3')],
+      },
+      {
+        title: 'Các hợp chất carbonyl C4H8O', brief: 'Dùng 4 C, 1 O và 8 H. Tìm mọi cách đặt nhóm C=O trên khung 4 carbon (mạch thẳng và mạch nhánh).',
+        qs: [
+          { q: 'Có bao nhiêu aldehyde ứng với C4H8O?', opts: ['1', '2', '3'], a: 1, why: 'butanal và 2-methylpropanal.' },
+          { q: 'Có bao nhiêu ketone ứng với C4H8O?', opts: ['0', '1', '2'], a: 1, why: 'Chỉ butan-2-one: C=O phải nằm giữa hai carbon, nên với mạch 4 carbon chỉ đặt được ở vị trí số 2.' },
+        ],
+        mols: [M('CCCC=O', 'butanal', 'CH3–CH2–CH2–CHO'), M('CC(C)C=O', '2-methylpropanal', 'CH3–CH(CH3)–CHO'), M('CCC(=O)C', 'butan-2-one', 'CH3–CO–CH2–CH3')],
+      },
+    ],
+  },
+  {
+    id: 'm7', short: 'Acid, ester', group: 'Carboxylic acid – ester', title: 'Carboxylic acid và ester', min: 5,
+    goal: 'Acid có –COOH (còn H gắn O); ester có –COO– nối hai gốc carbon; chất béo là triester của glycerol.',
+    example: {
+      title: 'Ví dụ mẫu: ethanoic acid CH3COOH', smi: 'CC(=O)O',
+      steps: [
+        { t: 'Lắp khung C2', d: 'Hai quả cầu đen nối bằng một que đơn.', heavy: [0, 1] },
+        { t: 'Nối O bằng liên kết đôi', d: 'Một quả cầu đỏ nối vào carbon thứ hai bằng liên kết đôi C=O.', heavy: [2], hl: [1, 2], tag: { a: [1, 2], t: 'C=O' } },
+        { t: 'Nối O thứ hai bằng liên kết đơn', d: 'Carbon thứ hai giờ đủ 4 liên kết (1 + 2 + 1). Quả cầu đỏ thứ hai còn 1 lỗ trống.', heavy: [3], hl: [1, 2, 3] },
+        { t: 'Điền H', d: 'CH3 nhận 3 H, O đơn nhận 1 H. C=O và –OH cùng gắn vào một carbon tạo nhóm –COOH: ethanoic acid (acetic acid) CH3COOH.', h: [0, 3], hl: [1, 2, 3], tag: { a: [1, 2, 3], t: '–COOH' } },
+        { t: 'So sánh với ester', d: 'Thay H của –OH bằng nhóm CH3 sẽ được ester CH3COOCH3: không còn H gắn vào O. Nhóm –COO– phẳng quanh carbon của C=O.', hl: [1, 2, 3] },
+      ],
+    },
+    tasks: [
+      {
+        title: 'Acid hay ester? (C3H6O2)', brief: 'Dùng 3 C, 2 O và 6 H. Lắp ba mô hình đều có C=O và một O đơn: một mô hình có liên kết O–H, hai mô hình còn lại có O nằm giữa hai gốc carbon.',
+        qs: [
+          { q: 'Chất nào còn nguyên tử H gắn vào O?', opts: ['propanoic acid', 'methyl ethanoate', 'ethyl methanoate'], a: 0, why: 'Chỉ acid carboxylic có nhóm –COOH chứa liên kết O–H.' },
+          { q: 'Có bao nhiêu ester ứng với C3H6O2?', opts: ['1', '2', '3'], a: 1, why: 'methyl ethanoate (CH3COOCH3) và ethyl methanoate (HCOOC2H5).' },
+        ],
+        mols: [M('CCC(=O)O', 'propanoic acid', 'CH3–CH2–COOH'), M('CC(=O)OC', 'methyl ethanoate (methyl acetate)', 'CH3–COO–CH3'), M('C(=O)OCC', 'ethyl methanoate (ethyl formate)', 'H–COO–CH2–CH3')],
+      },
+      {
+        title: 'Mô hình thu nhỏ của chất béo', brief: 'Chất béo là triester của glycerol. Lắp glycerol, rồi thay H của cả 3 nhóm –OH bằng gốc CH3C(=O)–. Gốc acid béo thật rất dài; ở đây rút gọn thành CH3 để vừa bộ kit.',
+        qs: [
+          { q: 'Một phân tử triester của glycerol có bao nhiêu nhóm ester –COO–?', opts: ['1', '2', '3', '4'], a: 2, why: 'Glycerol có 3 nhóm –OH, mỗi nhóm tạo một liên kết ester.' },
+          { q: 'Thủy phân hoàn toàn 1 phân tử chất béo thu được bao nhiêu phân tử glycerol?', opts: ['1', '2', '3'], a: 0, why: 'Mỗi phân tử chất béo chỉ có một khung glycerol; 3 gốc acid được giải phóng thành 3 phân tử acid (hoặc muối).' },
+        ],
+        mols: [
+          M('OCC(O)CO', 'glycerol', 'CH2(OH)–CH(OH)–CH2(OH)'),
+          M('CC(=O)OCC(OC(C)=O)COC(C)=O', 'triester rút gọn (triacetin)', 'CH2(OCOCH3)–CH(OCOCH3)–CH2(OCOCH3)', { rot: { 3: 60, 5: 240, 10: 60 } }),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm8', short: 'Tổng kết', group: 'Tổng kết', title: 'Nhận ra nhóm hợp chất từ mô hình', min: 5,
+    goal: 'Nhìn một mô hình lạ, tìm dấu hiệu cấu trúc và gọi tên nhóm hợp chất.',
+    final: true,
+  },
+];
+
+const QUIZ_CLASSES = ['Alkane', 'Alkene', 'Alkyne', 'Arene', 'Dẫn xuất halogen', 'Alcohol', 'Phenol', 'Aldehyde', 'Ketone', 'Carboxylic acid', 'Ester'];
+
+const QUIZ_ROUNDS = [
+  { smi: 'CC#CCC', ans: 'Alkyne', name: 'pent-2-yne', why: 'Có liên kết ba C≡C; bốn nguyên tử C–C≡C–C thẳng hàng.' },
+  { smi: 'CC(Br)C', ans: 'Dẫn xuất halogen', name: '2-bromopropane', why: 'Quả cầu nâu (Br) thay một H trên mạch carbon no.' },
+  { smi: 'Oc1ccc(C)cc1', ans: 'Phenol', name: '4-methylphenol', why: 'Nhóm –OH gắn trực tiếp vào vòng benzene.' },
+  { smi: 'OCC(O)CO', ans: 'Alcohol', name: 'glycerol (propane-1,2,3-triol)', why: 'Ba nhóm –OH gắn vào carbon no.' },
+  { smi: 'CCCCC=O', ans: 'Aldehyde', name: 'pentanal', why: 'C=O ở đầu mạch, carbon của C=O còn gắn 1 H.' },
+  { smi: 'CCC(=O)CC', ans: 'Ketone', name: 'pentan-3-one', why: 'C=O nằm giữa hai gốc ethyl, không có H gắn vào C=O.' },
+  { smi: 'CCCC(=O)O', ans: 'Carboxylic acid', name: 'butanoic acid', why: 'C=O và –OH cùng gắn vào một carbon: nhóm –COOH.' },
+  { smi: 'CC(=O)OCC', ans: 'Ester', name: 'ethyl ethanoate (ethyl acetate)', why: 'Có C=O, O nằm giữa hai gốc carbon và không có H gắn vào O.' },
+];
+
+const SUMMARY_ROWS = [
+  ['Alkane', 'Chỉ que đơn C–C và C–H', 'C tứ diện, góc ≈ 109,5°'],
+  ['Alkene', '1 liên kết đôi C=C (lò xo)', 'C=C và 4 nguyên tử kề cùng một mặt phẳng, ≈ 120°; không quay tự do'],
+  ['Alkyne', '1 liên kết ba C≡C', 'Đoạn C–C≡C–C thẳng, 180°'],
+  ['Arene', 'Vòng 6 C với H hoặc nhóm thế', 'Vòng phẳng, góc 120°, 6 liên kết C–C như nhau'],
+  ['Dẫn xuất halogen', 'Quả cầu halogen (Cl, Br) gắn vào C', 'C gắn halogen tứ diện (với C no)'],
+  ['Alcohol', '–OH gắn vào carbon no', 'C–O–H gấp khúc ≈ 109°'],
+  ['Phenol', '–OH gắn trực tiếp vào vòng benzene', 'O nối với C của vòng phẳng'],
+  ['Aldehyde', 'C=O đầu mạch, C còn gắn 1 H', 'C=O và 2 nguyên tử kề cùng mặt phẳng, ≈ 120°'],
+  ['Ketone', 'C=O giữa hai gốc carbon', 'C=O và 2 carbon kề cùng mặt phẳng, ≈ 120°'],
+  ['Carboxylic acid', '–COOH: C=O và –OH cùng một C', 'Phẳng quanh C=O; còn liên kết O–H'],
+  ['Ester', '–COO– nối hai gốc carbon', 'Phẳng quanh C=O; không còn H gắn O'],
+];
+/* ===== 3D ball-and-stick viewer (canvas 2D, painter's algorithm) ===== */
+const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const KIT = {
+  C: { base: '#2D3640', text: '#FFFFFF', name: 'đen' },
+  H: { base: '#EEF2F6', text: '#1B2B3D', name: 'trắng' },
+  O: { base: '#E5484D', text: '#FFFFFF', name: 'đỏ' },
+  N: { base: '#3B6FE0', text: '#FFFFFF', name: 'xanh dương' },
+  Cl: { base: '#3FA34D', text: '#FFFFFF', name: 'xanh lá' },
+  Br: { base: '#A65A2A', text: '#FFFFFF', name: 'nâu' },
+};
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mixc = (h, t, k) => { const c = hex2rgb(h); return 'rgb(' + c.map((v, i) => Math.round(v + (t[i] - v) * k)).join(',') + ')'; };
+Object.values(KIT).forEach(k => { k.light = mixc(k.base, [255, 255, 255], 0.55); k.dark = mixc(k.base, [0, 0, 0], 0.4); });
+const backOut = t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+
+let _themeStamp = -1, _theme = null;
+function theme(now) {
+  if (_themeStamp === now && _theme) return _theme;
+  const cs = getComputedStyle(document.documentElement);
+  const g = n => cs.getPropertyValue(n).trim();
+  _theme = { bond: g('--bond'), edge: g('--bondEdge'), rim: g('--rim'), acc: g('--accent-rgb'), tagBg: g('--tagBg'), tagInk: g('--tagInk'), font: g('--f-body') };
+  _themeStamp = now;
+  return _theme;
+}
+
+const VIEWERS = new Set();
+const IO = 'IntersectionObserver' in window
+  ? new IntersectionObserver(es => es.forEach(e => { if (e.target._v) e.target._v.on = e.isIntersecting; }), { rootMargin: '120px' })
+  : null;
+function loop(now) {
+  VIEWERS.forEach(v => { if (v.on) v.draw(now); });
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+class Viewer {
+  constructor(canvas, mol, o = {}) {
+    this.cv = canvas; this.ctx = canvas.getContext('2d'); this.mol = mol;
+    this.n = mol.atoms.length;
+    this.home = [o.yaw != null ? o.yaw : -0.6, o.pitch != null ? o.pitch : 0.4];
+    this.yaw = this.home[0]; this.pitch = this.home[1];
+    this.spin = o.spin != null ? o.spin : 0.32;
+    this.auto = !REDUCED;
+    this.labels = true;
+    this.on = !IO;
+    this.sc = new Float32Array(this.n); this.s0 = new Float32Array(this.n);
+    this.tg = new Uint8Array(this.n); this.t0 = new Float64Array(this.n); this.dl = new Float64Array(this.n);
+    this.hl = new Set(); this.tag = null; this.cam = null; this.last = 0; this.drag = null;
+    if (o.showAll) { this.sc.fill(1); this.tg.fill(1); }
+    canvas._v = this;
+    canvas.tabIndex = 0;
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', o.label || 'Mô hình phân tử 3D, kéo để xoay');
+    this.bind();
+    VIEWERS.add(this);
+    if (IO) IO.observe(canvas);
+  }
+  bind() {
+    const c = this.cv;
+    c.addEventListener('pointerdown', e => {
+      this.drag = { x: e.clientX, y: e.clientY, t: e.pointerType };
+      this.cam = null;
+      try { c.setPointerCapture(e.pointerId); } catch (_) { }
+    });
+    c.addEventListener('pointermove', e => {
+      if (!this.drag) return;
+      const dx = e.clientX - this.drag.x, dy = e.clientY - this.drag.y;
+      this.drag.x = e.clientX; this.drag.y = e.clientY;
+      this.yaw += dx * 0.01;
+      if (this.drag.t !== 'touch') this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch + dy * 0.01));
+    });
+    const end = () => { this.drag = null; };
+    c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+    c.addEventListener('dblclick', () => { this.yaw = this.home[0]; this.pitch = this.home[1]; });
+    c.addEventListener('keydown', e => {
+      const k = e.key;
+      if (k === 'ArrowLeft') this.yaw -= 0.15; else if (k === 'ArrowRight') this.yaw += 0.15;
+      else if (k === 'ArrowUp') this.pitch = Math.max(-1.5, this.pitch - 0.15);
+      else if (k === 'ArrowDown') this.pitch = Math.min(1.5, this.pitch + 0.15);
+      else return;
+      this.cam = null; e.preventDefault();
+    });
+  }
+  // visible: array of atom indexes in reveal order; instant skips the pop-in
+  show(list, instant) {
+    const now = performance.now(), set = new Set(list);
+    let k = 0;
+    list.forEach(i => {
+      if (!this.tg[i]) {
+        this.s0[i] = this.sc[i]; this.tg[i] = 1; this.t0[i] = now;
+        this.dl[i] = (instant || REDUCED) ? 0 : (k++) * 130;
+        if (instant || REDUCED) { this.sc[i] = 1; this.s0[i] = 1; }
+      }
+    });
+    for (let i = 0; i < this.n; i++) {
+      if (!set.has(i) && this.tg[i]) { this.s0[i] = this.sc[i]; this.tg[i] = 0; this.t0[i] = now; if (instant || REDUCED) { this.sc[i] = 0; this.s0[i] = 0; } }
+    }
+  }
+  shown() { const r = []; for (let i = 0; i < this.n; i++) if (this.tg[i]) r.push(i); return r; }
+  resize() {
+    const r = this.cv.getBoundingClientRect();
+    const W = Math.round(r.width), H = Math.round(r.height), d = Math.min(window.devicePixelRatio || 1, 2);
+    if (!W || !H) return null;
+    if (this.cv.width !== Math.round(W * d) || this.cv.height !== Math.round(H * d)) { this.cv.width = Math.round(W * d); this.cv.height = Math.round(H * d); }
+    this.ctx.setTransform(d, 0, 0, d, 0, 0);
+    return [W, H];
+  }
+  draw(now) {
+    const sz = this.resize(); if (!sz) return;
+    const [W, H] = sz, ctx = this.ctx, th = theme(now), m = this.mol;
+    const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0.016; this.last = now;
+    ctx.clearRect(0, 0, W, H);
+    // camera
+    if (this.cam) {
+      let dy = (this.cam[0] - this.yaw) % (2 * Math.PI); if (dy > Math.PI) dy -= 2 * Math.PI; if (dy < -Math.PI) dy += 2 * Math.PI;
+      const k = REDUCED ? 1 : Math.min(1, dt * 4.5);
+      this.yaw += dy * k; this.pitch += (this.cam[1] - this.pitch) * k;
+    } else if (this.auto && !this.drag) this.yaw += this.spin * dt;
+    // atom scale animation
+    for (let i = 0; i < this.n; i++) {
+      if (this.tg[i]) {
+        const e = (now - this.t0[i] - this.dl[i]) / 420;
+        this.sc[i] = e <= 0 ? this.s0[i] : this.s0[i] + (1 - this.s0[i]) * backOut(Math.min(e, 1));
+      } else {
+        const e = Math.min(1, Math.max(0, (now - this.t0[i]) / 200));
+        this.sc[i] = this.s0[i] * (1 - e);
+      }
+    }
+    const R = m.R, D = (R + 2.2) * 3, fmax = D / (D - R), S = 0.46 * Math.min(W, H) / (R * fmax);
+    const cx = W / 2, cy = H / 2;
+    const cyw = Math.cos(this.yaw), syw = Math.sin(this.yaw), cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
+    const proj = p => {
+      const x1 = p[0] * cyw + p[2] * syw, z1 = -p[0] * syw + p[2] * cyw;
+      const y2 = p[1] * cp - z1 * sp, z2 = p[1] * sp + z1 * cp, f = D / (D - z2);
+      return [cx + x1 * f * S, cy - y2 * f * S, z2, f];
+    };
+    const P = m.pos.map(proj);
+    const items = [];
+    const BR = 0.11;
+    // bonds (each split in two halves so occlusion by balls stays plausible)
+    m.bonds.forEach(b => {
+      const sa = this.sc[b.a], sb = this.sc[b.b];
+      if (sa < 0.02 || sb < 0.02) return;
+      const A = m.pos[b.a], B = m.pos[b.b];
+      const dx = B[0] - A[0], dy = B[1] - A[1], dz = B[2] - A[2], L = Math.hypot(dx, dy, dz);
+      const ux = dx / L, uy = dy / L, uz = dz / L;
+      const ra = Chem.RAD[m.atoms[b.a].el] * Math.min(sa, 1) * 0.9, rb = Chem.RAD[m.atoms[b.b].el] * Math.min(sb, 1) * 0.9;
+      const Ae = [A[0] + ux * ra, A[1] + uy * ra, A[2] + uz * ra], Be = [B[0] - ux * rb, B[1] - uy * rb, B[2] - uz * rb];
+      const t = Math.min(1, sa, sb);
+      let s1, s2;
+      if (sa >= sb) { s1 = Ae; s2 = [Ae[0] + (Be[0] - Ae[0]) * t, Ae[1] + (Be[1] - Ae[1]) * t, Ae[2] + (Be[2] - Ae[2]) * t]; }
+      else { s1 = Be; s2 = [Be[0] + (Ae[0] - Be[0]) * t, Be[1] + (Ae[1] - Be[1]) * t, Be[2] + (Ae[2] - Be[2]) * t]; }
+      const mid = [(s1[0] + s2[0]) / 2, (s1[1] + s2[1]) / 2, (s1[2] + s2[2]) / 2];
+      const p1 = proj(s1), p2 = proj(s2), pm = proj(mid);
+      const sx = p2[0] - p1[0], sy = p2[1] - p1[1], sl = Math.hypot(sx, sy);
+      const nx = sl > 0.5 ? -sy / sl : 0, ny = sl > 0.5 ? sx / sl : 1;
+      [[p1, pm], [pm, p2]].forEach(([q1, q2]) => {
+        items.push({ z: (q1[2] + q2[2]) / 2, f: (q1[3] + q2[3]) / 2, k: 'b', q1, q2, o: b.o, nx, ny });
+      });
+    });
+    // atoms
+    for (let i = 0; i < this.n; i++) {
+      if (this.sc[i] < 0.02) continue;
+      const p = P[i];
+      items.push({ z: p[2], k: 'a', i, x: p[0], y: p[1], r: Chem.RAD[m.atoms[i].el] * S * p[3] * this.sc[i] });
+    }
+    items.sort((a, b) => a.z - b.z);
+    // halos for highlighted atoms
+    if (this.hl.size) {
+      const pulse = 1 + 0.08 * Math.sin(now / 280);
+      this.hl.forEach(i => {
+        if (this.sc[i] < 0.5) return;
+        const p = P[i], r = Chem.RAD[m.atoms[i].el] * S * p[3] * 1.75 * pulse;
+        ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 6.2832);
+        ctx.fillStyle = 'rgba(' + th.acc + ',.20)'; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(' + th.acc + ',.85)'; ctx.stroke();
+      });
+    }
+    items.forEach(it => {
+      if (it.k === 'b') this.drawBond(ctx, it, S, BR, th);
+      else this.drawAtom(ctx, it, th);
+    });
+    if (this.tag) this.drawTag(ctx, P, S, W, H, th);
+  }
+  drawBond(ctx, it, S, BR, th) {
+    const w = Math.max(2, BR * S * it.f * 2);
+    const lines = it.o === 2 ? [-1, 1] : it.o === 3 ? [-1.6, 0, 1.6] : it.o === 1.5 ? [0, 1.3] : [0];
+    const gap = w * 0.95;
+    const wl = it.o === 1 ? w : it.o === 2 ? w * 0.72 : it.o === 3 ? w * 0.62 : w * 0.8;
+    lines.forEach((off, idx) => {
+      const ox = it.nx * off * gap, oy = it.ny * off * gap;
+      const ww = it.o === 1.5 && idx === 1 ? wl * 0.6 : wl;
+      ctx.globalAlpha = it.o === 1.5 && idx === 1 ? 0.6 : 1;
+      ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(it.q1[0] + ox, it.q1[1] + oy); ctx.lineTo(it.q2[0] + ox, it.q2[1] + oy);
+      ctx.strokeStyle = th.edge; ctx.lineWidth = ww + 2; ctx.stroke();
+      ctx.strokeStyle = th.bond; ctx.lineWidth = ww; ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  }
+  drawAtom(ctx, it, th) {
+    const el = this.mol.atoms[it.i].el, k = KIT[el] || KIT.C, r = Math.max(1, it.r);
+    const g = ctx.createRadialGradient(it.x - r * 0.35, it.y - r * 0.4, r * 0.08, it.x, it.y, r);
+    g.addColorStop(0, k.light); g.addColorStop(0.5, k.base); g.addColorStop(1, k.dark);
+    ctx.beginPath(); ctx.arc(it.x, it.y, r, 0, 6.2832);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = th.rim; ctx.stroke();
+    if (this.labels && r > 8) {
+      ctx.font = '700 ' + Math.round(r * 0.9) + 'px ' + th.font;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = k.text; ctx.fillText(el, it.x, it.y + r * 0.04);
+    }
+  }
+  drawTag(ctx, P, S, W, H, th) {
+    const t = this.tag; let sx = 0, sy = 0, c = 0, rr = 10;
+    t.a.forEach(i => { if (this.sc[i] > 0.5) { sx += P[i][0]; sy += P[i][1]; c++; rr = Math.max(rr, Chem.RAD[this.mol.atoms[i].el] * S * P[i][3]); } });
+    if (!c) return;
+    sx /= c; sy /= c;
+    ctx.font = '700 13px ' + th.font;
+    const tw = ctx.measureText(t.t).width + 16, th2 = 24;
+    let bx = sx + rr * 1.5, by = sy - rr * 2.3;
+    bx = Math.max(6, Math.min(W - tw - 6, bx)); by = Math.max(6, Math.min(H - th2 - 6, by));
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(bx + tw / 2, by + th2 / 2);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(' + th.acc + ',.9)'; ctx.stroke();
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, by, tw, th2, 5) : ctx.rect(bx, by, tw, th2);
+    ctx.fillStyle = th.tagBg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(' + th.acc + ',1)'; ctx.stroke();
+    ctx.fillStyle = th.tagInk; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(t.t, bx + tw / 2, by + th2 / 2 + 0.5);
+  }
+}
+/* ===== UI: clock, rail, stations, stepper, challenges, quiz ===== */
+(function () {
+  const T = s => String(s).replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>');
+  const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  const svg = d => '<svg viewBox="0 0 16 16" aria-hidden="true">' + d + '</svg>';
+  const st = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const IC = {
+    play: svg('<path d="M4 2.5v11l9-5.5z" fill="currentColor"/>'),
+    pause: svg('<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/>'),
+    prev: svg('<path d="M10.5 2.5L4.5 8l6 5.5" ' + st + '/>'),
+    next: svg('<path d="M5.5 2.5L11.5 8l-6 5.5" ' + st + '/>'),
+    replay: svg('<path d="M3 8a5 5 0 1 0 1.7-3.8M3 2.5v3.2h3.2" ' + st + '/>'),
+    check: svg('<path d="M3 8.5l3.2 3L13 4.5" ' + st + '/>'),
+    eye: svg('<path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" ' + st + '/><circle cx="8" cy="8" r="2" fill="currentColor"/>'),
+  };
+
+  Viewer.prototype.destroy = function () { VIEWERS.delete(this); if (IO) IO.unobserve(this.cv); };
+
+  const molCache = {};
+  const getMol = spec => { const k = spec.smi + JSON.stringify(spec.opts || {}); return molCache[k] || (molCache[k] = Chem.build(spec.smi, spec.opts || {})); };
+  const ORDER = ['C', 'H', 'O', 'N', 'Cl', 'Br'];
+  const dotHTML = el => '<i class="dot" style="background:' + KIT[el].base + '"></i>';
+  function invHTML(inv, extra) {
+    let s = '';
+    ORDER.forEach(el => { if (inv.atoms[el]) s += '<span class="chip">' + dotHTML(el) + '<b>' + inv.atoms[el] + '</b> ' + el + '</span>'; });
+    s += '<span class="chip"><i class="stick"></i><b>' + inv.single + '</b> que đơn</span>';
+    if (inv.dbl) s += '<span class="chip"><i class="stick d"></i><b>' + inv.dbl + '</b> liên kết đôi</span>';
+    if (inv.trip) s += '<span class="chip"><i class="stick t"></i><b>' + inv.trip + '</b> liên kết ba</span>';
+    return s + (extra || '');
+  }
+
+  /* ---------- state, timeline ---------- */
+  const N = MODULES.length;
+  const cum = []; MODULES.reduce((a, m, i) => (cum[i] = a + m.min), 0);
+  const TOTAL = 45 * 60;
+  const state = { cur: 0, done: new Set() };
+  const secs = [], steppers = [], solvedQ = MODULES.map(() => 0), needQ = MODULES.map(m => (m.tasks || []).reduce((a, t) => a + t.qs.length, 0));
+  const stage = document.getElementById('stage'), rail = document.getElementById('rail');
+
+  /* ---------- clock ---------- */
+  const clock = { running: false, remain: TOTAL, endAt: 0 };
+  const cEl = document.getElementById('clock'), cTxt = document.getElementById('clockText'), cBtn = document.getElementById('clockBtn'), cRst = document.getElementById('clockReset');
+  function paintClock() {
+    const m = Math.floor(clock.remain / 60), s = clock.remain % 60;
+    cTxt.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    cEl.classList.toggle('low', clock.remain <= 300 && clock.remain < TOTAL);
+    cBtn.innerHTML = clock.running ? IC.pause + 'Tạm dừng' : IC.play + (clock.remain < TOTAL ? 'Tiếp tục' : 'Bắt đầu 45 phút');
+    paintRail();
+  }
+  setInterval(() => {
+    if (!clock.running) return;
+    clock.remain = Math.max(0, Math.round((clock.endAt - performance.now()) / 1000));
+    if (!clock.remain) clock.running = false;
+    paintClock();
+  }, 500);
+  cBtn.addEventListener('click', () => {
+    if (clock.remain === 0) return;
+    clock.running = !clock.running;
+    if (clock.running) clock.endAt = performance.now() + clock.remain * 1000;
+    paintClock();
+  });
+  cRst.addEventListener('click', () => { clock.running = false; clock.remain = TOTAL; paintClock(); });
+
+  /* ---------- rail ---------- */
+  MODULES.forEach((m, i) => {
+    const b = h('button', 'stop');
+    b.type = 'button'; b.dataset.i = i;
+    b.innerHTML = '<span class="stop-n">' + i + '</span><span class="stop-name">' + m.short + '</span><span class="stop-t"></span>';
+    b.addEventListener('click', () => go(i));
+    rail.appendChild(b);
+  });
+  function paintRail() {
+    const el = (TOTAL - clock.remain) / 60;
+    [...rail.children].forEach((b, i) => {
+      const done = state.done.has(i), late = clock.remain < TOTAL && el > cum[i] && !done;
+      b.classList.toggle('done', done); b.classList.toggle('late', late);
+      b.setAttribute('aria-current', i === state.cur ? 'true' : 'false');
+      b.querySelector('.stop-n').innerHTML = done ? IC.check : i;
+      b.querySelector('.stop-t').textContent = (late ? 'quá mốc ' : 'mốc ') + 'phút ' + cum[i];
+    });
+  }
+
+  /* ---------- stepper (animated worked example) ---------- */
+  function buildStepper(mod) {
+    const ex = mod.example, mol = getMol({ smi: ex.smi }), steps = ex.steps;
+    const root = h('div', 'ex');
+    const left = h('div'), right = h('div');
+    const stg = h('div', 'stage'), cv = h('canvas');
+    stg.append(cv, h('span', 'stage-hint', 'Kéo để xoay · nhấp đúp để đặt lại'));
+    const tools = h('div', 'stage-tools');
+    const bLab = h('button', 'mini', 'Ký hiệu'); bLab.type = 'button'; bLab.setAttribute('aria-pressed', 'true');
+    tools.append(bLab); stg.append(tools);
+    const kit = h('div', 'kitbar');
+    left.append(stg, kit);
+    const list = h('ol', 'steps');
+    const btns = steps.map((s, k) => {
+      const li = h('li'), b = h('button', 'step');
+      b.type = 'button';
+      b.innerHTML = '<span class="step-n">' + (k + 1) + '</span><span class="step-t">' + T(s.t) + '</span><span class="step-d">' + T(s.d) + '</span>';
+      b.addEventListener('click', () => { pause(); goStep(k); });
+      li.appendChild(b); list.appendChild(li); return b;
+    });
+    const ctr = h('div', 'ctrls');
+    const bPrev = h('button', 'btn', IC.prev + 'Bước trước'), bPlay = h('button', 'btn btn-primary'), bNext = h('button', 'btn', 'Bước sau' + IC.next), bRe = h('button', 'btn', IC.replay + 'Làm lại');
+    [bPrev, bPlay, bNext, bRe].forEach(b => b.type = 'button');
+    ctr.append(bPlay, bPrev, bNext, bRe);
+    right.append(list, ctr);
+    root.append(left, right);
+
+    const v = new Viewer(cv, mol, { label: 'Mô hình 3D: ' + ex.title });
+    let k = 0, timer = null;
+    const gl = i => mol.atoms.reduce((a, x, j) => (x.hOf === i && a.push(j), a), []);
+    function visList(upto) {
+      const out = [], seen = new Set(), add = i => { if (!seen.has(i)) { seen.add(i); out.push(i); } };
+      for (let s = 0; s <= upto; s++) { (steps[s].heavy || []).forEach(add); (steps[s].h || []).forEach(o => gl(o).forEach(add)); }
+      return out;
+    }
+    function paintKit(vis) {
+      const set = new Set(vis), cnt = {};
+      vis.forEach(i => { const e = mol.atoms[i].el; cnt[e] = (cnt[e] || 0) + 1; });
+      let single = 0, dbl = 0, trip = 0, ar = 0;
+      mol.bonds.forEach(b => { if (set.has(b.a) && set.has(b.b)) { if (b.o === 1) single++; else if (b.o === 2) dbl++; else if (b.o === 3) trip++; else ar++; } });
+      single += Math.ceil(ar / 2); dbl += Math.floor(ar / 2);
+      kit.innerHTML = '<span class="cap">Đã dùng</span>' + invHTML({ atoms: cnt, single, dbl, trip });
+    }
+    function goStep(i, instant) {
+      k = Math.max(0, Math.min(steps.length - 1, i));
+      const s = steps[k], vis = visList(k);
+      v.show(vis, instant);
+      v.hl = new Set(s.hl || []); v.tag = s.tag || null;
+      v.cam = s.cam ? [s.cam[0] * Math.PI / 180, s.cam[1] * Math.PI / 180] : null;
+      btns.forEach((b, j) => { b.classList.toggle('cur', j === k); b.classList.toggle('past', j < k); if (j === k) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
+      bPrev.disabled = k === 0; bNext.disabled = k === steps.length - 1;
+      paintKit(vis);
+    }
+    function pause() { if (timer) { clearInterval(timer); timer = null; } bPlay.innerHTML = IC.play + 'Tự chạy'; }
+    function play() {
+      if (k >= steps.length - 1) { v.show([], true); goStep(0); }
+      bPlay.innerHTML = IC.pause + 'Dừng';
+      timer = setInterval(() => {
+        if (!stg.offsetParent) { pause(); return; }
+        if (k >= steps.length - 1) { pause(); return; }
+        goStep(k + 1);
+      }, 3200);
+    }
+    bPlay.addEventListener('click', () => (timer ? pause() : play()));
+    bPrev.addEventListener('click', () => { pause(); goStep(k - 1); });
+    bNext.addEventListener('click', () => { pause(); goStep(k + 1); });
+    bRe.addEventListener('click', () => { pause(); v.show([], true); goStep(0); play(); });
+    bLab.addEventListener('click', () => { v.labels = !v.labels; bLab.setAttribute('aria-pressed', String(v.labels)); });
+    pause(); goStep(0);
+    return { root, reset() { pause(); v.show([], true); goStep(0); v.yaw = v.home[0]; v.pitch = v.home[1]; } };
+  }
+
+  /* ---------- challenge cards ---------- */
+  function buildQ(q, onOk) {
+    const w = h('div', 'q');
+    w.append(h('p', 'q-text', T(q.q)));
+    const o = h('div', 'opts'), fb = h('p', 'fb'); fb.setAttribute('aria-live', 'polite');
+    const bs = q.opts.map((t, i) => {
+      const b = h('button', 'opt', T(t)); b.type = 'button';
+      b.addEventListener('click', () => {
+        if (i === q.a) {
+          b.classList.add('ok'); bs.forEach(x => x.disabled = true);
+          fb.className = 'fb ok'; fb.innerHTML = 'Đúng. ' + T(q.why); onOk();
+        } else {
+          b.classList.add('bad'); b.disabled = true;
+          fb.className = 'fb bad'; fb.textContent = 'Chưa đúng. Nhìn lại mô hình em vừa lắp rồi chọn lại.';
+        }
+      });
+      o.appendChild(b); return b;
+    });
+    w.append(o, fb);
+    return w;
+  }
+  function buildTask(mi, task, ti) {
+    const card = h('article', 'card');
+    const hd = h('div', 'card-h');
+    hd.append(h('span', 'tag', 'Thử thách ' + (ti + 1)), h('h3', null, T(task.title)));
+    card.append(hd, h('p', 'brief', T(task.brief)));
+    const mols = (task.mols || []).map(s => ({ s, m: getMol(s) }));
+    if (mols.length) {
+      const big = mols.reduce((a, b) => (b.m.atoms.length > a.m.atoms.length ? b : a));
+      const same = mols.every(x => Chem.formula(x.m) === Chem.formula(big.m));
+      const kl = h('div', 'kitline', '<span class="cap">Kit ' + (same ? 'cho mỗi mô hình' : 'cho mô hình lớn nhất') + '</span>' + invHTML(Chem.inventory(big.m), same ? '<span class="chip">(' + Chem.formula(big.m) + ')</span>' : ''));
+      card.append(kl);
+    }
+    const qs = h('div', 'qs');
+    task.qs.forEach(q => qs.append(buildQ(q, () => { solvedQ[mi]++; if (solvedQ[mi] >= needQ[mi]) finish(mi); })));
+    card.append(qs);
+    if (mols.length) {
+      const row = h('div', 'reveal-row'), btn = h('button', 'btn', IC.eye + 'Em đã lắp xong: xem mô hình 3D để đối chiếu');
+      btn.type = 'button';
+      row.append(btn, h('span', 'reveal-note', 'Xoay mô hình 3D và so với mô hình em lắp bằng kit.'));
+      const grid = h('div', 'rgrid'); grid.hidden = true;
+      let built = false;
+      btn.addEventListener('click', () => {
+        if (!built) {
+          built = true;
+          mols.forEach(({ s, m }) => {
+            const c = h('figure', 'rcard'); c.style.margin = 0;
+            const sg = h('div', 'stage'), cv = h('canvas');
+            sg.append(cv);
+            c.append(sg, h('figcaption', 'rcap', '<b>' + s.name + '</b><span class="fx">' + Chem.formula(m) + ' · ' + T(s.cond) + '</span>'));
+            grid.append(c);
+            grid.hidden = false;
+            new Viewer(cv, m, { showAll: true, label: 'Mô hình 3D của ' + s.name });
+          });
+        }
+        grid.hidden = !grid.hidden;
+        btn.innerHTML = IC.eye + (grid.hidden ? 'Em đã lắp xong: xem mô hình 3D để đối chiếu' : 'Ẩn mô hình 3D');
+      });
+      card.append(row, grid);
+    }
+    return card;
+  }
+
+  /* ---------- final quiz + summary ---------- */
+  function buildQuiz() {
+    const card = h('article', 'card');
+    const hd = h('div', 'card-h');
+    hd.append(h('span', 'tag', 'Thử thách cuối'), h('h3', null, 'Mô hình này thuộc nhóm hợp chất nào?'));
+    const prog = h('div', 'qprog'); const pips = QUIZ_ROUNDS.map(() => prog.appendChild(h('i')));
+    const body = h('div', 'ex'), left = h('div'), right = h('div');
+    const stg = h('div', 'stage');
+    left.append(stg); body.append(left, right);
+    card.append(hd, prog, body);
+    let idx = 0, score = 0, viewer = null, answered = false;
+    function round() {
+      const r = QUIZ_ROUNDS[idx], mol = getMol({ smi: r.smi });
+      if (viewer) viewer.destroy();
+      stg.innerHTML = ''; const cv = h('canvas'); stg.append(cv, h('span', 'stage-hint', 'Kéo để xoay'));
+      viewer = new Viewer(cv, mol, { showAll: true, label: 'Mô hình cần nhận diện' });
+      pips.forEach((p, i) => { if (i === idx) p.className = 'cur'; });
+      right.innerHTML = '';
+      right.append(h('p', 'q-text', 'Câu ' + (idx + 1) + '/' + QUIZ_ROUNDS.length + '. Công thức phân tử: <b>' + Chem.formula(mol) + '</b>. Tìm dấu hiệu cấu trúc rồi chọn nhóm.'));
+      const o = h('div', 'qopts'), fb = h('p', 'fb'); fb.setAttribute('aria-live', 'polite');
+      answered = false;
+      const bs = QUIZ_CLASSES.map(c => {
+        const b = h('button', 'opt', c); b.type = 'button';
+        b.addEventListener('click', () => {
+          if (answered) return; answered = true;
+          const ok = c === r.ans;
+          if (ok) score++;
+          bs.forEach(x => { x.disabled = true; if (x.textContent === r.ans) x.classList.add('ok'); });
+          if (!ok) b.classList.add('bad');
+          pips[idx].className = ok ? 'ok' : 'bad';
+          fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+          fb.innerHTML = (ok ? 'Đúng. ' : 'Chưa đúng, đáp án là ' + r.ans + '. ') + '<b>' + r.name + '</b>: ' + T(r.why);
+          const nx = h('button', 'btn btn-primary', idx < QUIZ_ROUNDS.length - 1 ? 'Câu tiếp' + IC.next : 'Xem kết quả');
+          nx.type = 'button';
+          nx.addEventListener('click', () => { if (idx < QUIZ_ROUNDS.length - 1) { idx++; round(); } else end(); });
+          right.append(nx);
+        });
+        o.appendChild(b); return b;
+      });
+      right.append(o, fb);
+    }
+    function end() {
+      if (viewer) viewer.destroy(); viewer = null;
+      body.innerHTML = '';
+      const box = h('div');
+      box.append(h('p', 'score', score + ' / ' + QUIZ_ROUNDS.length + ' mô hình nhận đúng'),
+        h('p', 'brief', score >= 7 ? 'Em đã đọc được cấu trúc của hầu hết các nhóm hợp chất. Đối chiếu bảng dưới đây để chốt lại.' : 'Xem lại bảng dưới đây: dấu hiệu trên mô hình quyết định nhóm hợp chất, không phải số carbon.'));
+      const again = h('button', 'btn', IC.replay + 'Làm lại'); again.type = 'button';
+      again.addEventListener('click', () => { idx = 0; score = 0; pips.forEach(p => p.className = ''); card.replaceChild(body, box); body.innerHTML = ''; body.append(left, right); round(); });
+      box.append(again); box.style.display = 'grid'; box.style.gap = '10px'; box.style.justifyItems = 'start';
+      card.append(box);
+      body.replaceWith(box);
+      finish(N - 1);
+    }
+    round();
+    return card;
+  }
+  function buildSummary() {
+    const card = h('article', 'card');
+    const hd = h('div', 'card-h'); hd.append(h('span', 'tag', 'Chốt kiến thức'), h('h3', null, 'Dấu hiệu trên mô hình của từng nhóm'));
+    const rows = SUMMARY_ROWS.map(r => '<tr><td>' + r[0] + '</td><td>' + T(r[1]) + '</td><td>' + T(r[2]) + '</td></tr>').join('');
+    const tw = h('div', 'tablewrap', '<table><thead><tr><th>Nhóm</th><th>Nhìn thấy trên mô hình</th><th>Hình dạng quanh nguyên tử then chốt</th></tr></thead><tbody>' + rows + '</tbody></table>');
+    card.append(hd, tw);
+    return card;
+  }
+
+  /* ---------- teacher panel + legend (khởi động) ---------- */
+  function buildTeacher() {
+    const d = h('details', 'teacher'), mx = { atoms: {}, single: 0, dbl: 0, trip: 0 };
+    MODULES.forEach(m => (m.tasks || []).forEach(t => (t.mols || []).forEach(s => {
+      const inv = Chem.inventory(getMol(s));
+      Object.keys(inv.atoms).forEach(e => { mx.atoms[e] = Math.max(mx.atoms[e] || 0, inv.atoms[e]); });
+      mx.single = Math.max(mx.single, inv.single); mx.dbl = Math.max(mx.dbl, inv.dbl); mx.trip = Math.max(mx.trip, inv.trip);
+    })));
+    let t0 = 0;
+    const plan = MODULES.map((m, i) => { const s = t0; t0 += m.min; return '<li>Phút ' + s + '–' + t0 + ': ' + (i === 0 ? 'Khởi động' : i === N - 1 ? 'Tổng kết' : 'Nhóm ' + i + ' · ' + m.short) + '</li>'; }).join('');
+    d.innerHTML = '<summary>Dành cho giáo viên: nhịp 45 phút và kit cần chuẩn bị</summary><div class="body">' +
+      '<div><b>Nhịp lớp học</b><ul>' + plan + '</ul></div>' +
+      '<div><b>Kit tối thiểu cho mỗi học sinh</b> (lắp từng mô hình một, tháo ra sau khi đối chiếu)<div class="kitline">' + invHTML(mx) + '</div></div>' +
+      '<div><b>Gợi ý tổ chức</b><ul>' +
+      '<li>Mỗi nhóm: học sinh xem ví dụ mẫu và lắp song song 1 phút, tự lắp các mô hình của thử thách, trả lời câu hỏi rồi mới mở mô hình 3D để đối chiếu.</li>' +
+      '<li>Lớp ít học sinh: chia các mô hình trong mỗi thử thách cho từng em lắp riêng, sau đó đối chiếu kết quả với nhau.</li>' +
+      '<li>Thiếu thời gian: bỏ thử thách 2 của nhóm 2 hoặc nhóm 5, hoặc bỏ nhóm 4 (3 phút).</li>' +
+      '<li>Đồng hồ chỉ nhắc nhịp: mốc nhóm nào bị quá sẽ đổi sang màu vàng trên thanh nhóm.</li></ul></div></div>';
+    return d;
+  }
+  function buildLegend() {
+    const card = h('article', 'card');
+    const hd = h('div', 'card-h'); hd.append(h('span', 'tag', 'Bộ linh kiện'), h('h3', null, 'Quả cầu, lỗ và que liên kết'));
+    const holes = { C: 4, H: 1, O: 2, Cl: 1, Br: 1 }, nm = { C: 'Carbon', H: 'Hydrogen', O: 'Oxygen', Cl: 'Chlorine', Br: 'Bromine' };
+    let lg = '';
+    ['C', 'H', 'O', 'Cl', 'Br'].forEach(e => {
+      lg += '<div class="leg"><div class="ball" style="background:radial-gradient(circle at 35% 30%,' + KIT[e].light + ',' + KIT[e].base + ' 55%,' + KIT[e].dark + ');color:' + KIT[e].text + '">' + e + '</div><b>' + nm[e] + '</b><span>Màu ' + KIT[e].name + ' · ' + holes[e] + ' lỗ</span></div>';
+    });
+    lg += '<div class="leg"><div><i class="stick" style="width:30px"></i></div><b>1 que cứng</b><span>Liên kết đơn σ</span></div>' +
+      '<div class="leg"><div><i class="stick d" style="width:30px"></i></div><b>2 lò xo</b><span>Liên kết đôi: 1σ + 1π</span></div>' +
+      '<div class="leg"><div><i class="stick t" style="width:30px"></i></div><b>3 lò xo</b><span>Liên kết ba: 1σ + 2π</span></div>';
+    card.append(hd, h('div', 'legend', lg), h('p', 'subhead', 'Quy trình lắp dùng cho mọi nhóm'),
+      h('ol', 'flow', '<li><b>Khung carbon</b>Nối các C bằng que.</li><li><b>Nguyên tử khác</b>Gắn O, halogen, nối đôi, nối ba.</li><li><b>Điền H</b>Lấp mọi lỗ còn trống bằng H.</li><li><b>Kiểm tra</b>C đủ 4 liên kết, O đủ 2, H và halogen đủ 1.</li>'));
+    return card;
+  }
+
+  /* ---------- assemble stations ---------- */
+  function finish(i) { if (!state.done.has(i)) { state.done.add(i); paintRail(); const nb = secs[i].querySelector('.nextbtn'); if (nb) nb.classList.add('pulse'); } }
+  MODULES.forEach((m, i) => {
+    const sec = h('section', 'mod'); sec.id = m.id;
+    const hd = h('header', 'mod-head');
+    const eb = i === 0 ? 'Khởi động · ' + m.min + ' phút' : m.final ? 'Tổng kết · ' + m.min + ' phút' : 'Nhóm ' + i + ' · ' + m.group + ' · ' + m.min + ' phút';
+    hd.append(h('span', 'eyebrow', eb), h('h2', null, T(m.title)), h('p', 'mod-goal', T(m.goal)));
+    hd.append(h('p', 'pace', m.final ? '<span>Kết thúc ở <b>phút ' + cum[i] + '</b></span><span>Khoảng 30 giây cho mỗi mô hình</span>'
+      : '<span>Kết thúc ở <b>phút ' + cum[i] + '</b></span><span>Xem ví dụ <b>1 phút</b></span><span>Lắp và trả lời <b>' + (m.min - 1) + ' phút</b></span>'));
+    sec.append(hd);
+    if (i === 0) sec.append(buildTeacher(), buildLegend());
+    if (m.example) {
+      const card = h('article', 'card'), ch = h('div', 'card-h');
+      ch.append(h('span', 'tag', 'Ví dụ mẫu · chạy từng bước'), h('h3', null, T(m.example.title)));
+      const sp = buildStepper(m); steppers[i] = sp;
+      card.append(ch, sp.root); sec.append(card);
+    }
+    (m.tasks || []).forEach((t, ti) => sec.append(buildTask(i, t, ti)));
+    if (m.final) sec.append(buildQuiz(), buildSummary());
+    const nav = h('div', 'modnav');
+    const bp = h('button', 'btn', IC.prev + (i ? 'Nhóm trước' : 'Đầu bài')); bp.type = 'button'; bp.disabled = i === 0;
+    bp.addEventListener('click', () => go(i - 1));
+    nav.append(bp);
+    if (i < N - 1) { const bn = h('button', 'btn btn-primary nextbtn', 'Tiếp: ' + MODULES[i + 1].short + IC.next); bn.type = 'button'; bn.addEventListener('click', () => go(i + 1)); nav.append(bn); }
+    sec.append(nav);
+    stage.appendChild(sec); secs.push(sec);
+  });
+
+  function go(i, noScroll) {
+    i = Math.max(0, Math.min(N - 1, i));
+    secs.forEach((s, j) => s.classList.toggle('on', j === i));
+    state.cur = i; paintRail();
+    if (steppers[i]) steppers[i].reset();
+    const b = rail.children[i]; if (b && b.scrollIntoView) b.scrollIntoView({ inline: 'center', block: 'nearest' });
+    if (!noScroll) window.scrollTo(0, 0);
+  }
+  const hm = /^#m(\d)$/.exec(location.hash || '');
+  go(hm ? +hm[1] : 0, true);
+  paintClock();
+  window.addEventListener('hashchange', () => { const x = /^#m(\d)$/.exec(location.hash || ''); if (x) go(+x[1]); });
+})();
+</script>
+
+</body></html>
